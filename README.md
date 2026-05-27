@@ -6,7 +6,7 @@
 ## How to Run
     1. `dotnet restore`
     2. `dotnet run`
-    3. Open the Scalar UI URL shown in terminal, usually https://localhost:7xxx/scalar
+    3. Open the Scalar UI URL shown in terminal, usually https://localhost:7227/scalar/v1
 
 ## Endpoints
     - GET /jobs - returns all job listings
