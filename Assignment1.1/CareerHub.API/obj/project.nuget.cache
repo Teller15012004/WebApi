@@ -1,11 +1,12 @@
 {
   "version": 2,
-  "dgSpecHash": "gONeZWcci5g=",
+  "dgSpecHash": "+UP5xQSiqBk=",
   "success": true,
   "projectFilePath": "C:\\Users\\Khauhelo\\Desktop\\WebApi\\WebApi\\Assignment1.1\\CareerHub.API\\CareerHub.API.csproj",
   "expectedPackageFiles": [
     "C:\\Users\\Khauhelo\\.nuget\\packages\\microsoft.aspnetcore.openapi\\10.0.8\\microsoft.aspnetcore.openapi.10.0.8.nupkg.sha512",
-    "C:\\Users\\Khauhelo\\.nuget\\packages\\microsoft.openapi\\2.0.0\\microsoft.openapi.2.0.0.nupkg.sha512"
+    "C:\\Users\\Khauhelo\\.nuget\\packages\\microsoft.openapi\\2.0.0\\microsoft.openapi.2.0.0.nupkg.sha512",
+    "C:\\Users\\Khauhelo\\.nuget\\packages\\scalar.aspnetcore\\2.14.14\\scalar.aspnetcore.2.14.14.nupkg.sha512"
   ],
   "logs": []
 }
