@@ -1,41 +1,40 @@
+using CareerHub.API.Models;
+using CareerHub.API.Services;
+using Microsoft.AspNetCore.OpenApi;
+using Scalar.AspNetCore;
+
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
-// Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
-builder.Services.AddOpenApi();
+// Add services
+builder.Services.AddSingleton<JobListingService>();
+builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddOpenApi(); // .NET 10 OpenAPI
 
 var app = builder.Build();
 
-// Configure the HTTP request pipeline.
+// Enable Scalar UI
 if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi();
+    app.MapScalarApiReference(); // Auto available in .NET 10 template
 }
 
 app.UseHttpsRedirection();
 
-var summaries = new[]
-{
-    "Freezing", "Bracing", "Chilly", "Cool", "Mild", "Warm", "Balmy", "Hot", "Sweltering", "Scorching"
-};
+var jobs = app.MapGroup("/jobs");
 
-app.MapGet("/weatherforecast", () =>
+// GET /jobs
+jobs.MapGet("/", async (JobListingService service) =>
 {
-    var forecast =  Enumerable.Range(1, 5).Select(index =>
-        new WeatherForecast
-        (
-            DateOnly.FromDateTime(DateTime.Now.AddDays(index)),
-            Random.Shared.Next(-20, 55),
-            summaries[Random.Shared.Next(summaries.Length)]
-        ))
-        .ToArray();
-    return forecast;
-})
-.WithName("GetWeatherForecast");
+    var result = await service.GetAllAsync();
+    return Results.Ok(result);
+});
+
+// GET /jobs/{id}
+jobs.MapGet("/{id:int}", async (int id, JobListingService service) =>
+{
+    var job = await service.GetByIdAsync(id);
+    return job is not null ? Results.Ok(job) : Results.NotFound();
+});
 
 app.Run();
-
-record WeatherForecast(DateOnly Date, int TemperatureC, string? Summary)
-{
-    public int TemperatureF => 32 + (int)(TemperatureC / 0.5556);
-}
