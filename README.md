@@ -28,3 +28,11 @@ Data Annotations can only validate one field at a time, so they cannot express t
 ### DELETE for a missing ID returns 404
     I return 404 Not Found. On a job board, a client deleting an ID that does not exist almost certainly has a wrong or stale reference.
     Returning 204 would silently hide that mistake. A 404 forces the client to notice and handle the error correctly.
+
+## Assignment 1.3 Design Decisions
+### Controller Thinning
+    Throwing JobNotFoundException instead of returning NotFound() directly keeps the controller focused on one job — the happy path. The controller should not need to know that a missing job maps to HTTP 404. That mapping lives in one place — the GlobalExceptionHandler. If we ever need to change the status code or error shape, we change it once instead of hunting through every endpoint.
+
+### Structured Logging with Serilog
+    Console.WriteLine produces plain text strings that are impossible to query or filter in production. Serilog writes structured JSON where every field
+    — timestamp, level, message, exception — is a queryable property. In a real system, those logs feed into tools like Seq, Datadog, or Azure Monitor where you can filter by status code, search by job ID, or alert on error rate spikes. Plain strings cannot do any of that.
