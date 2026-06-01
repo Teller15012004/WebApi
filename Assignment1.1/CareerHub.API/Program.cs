@@ -57,50 +57,6 @@ try
         app.MapScalarApiReference();
     }
 
-    // ── In-memory store ───────────────────────────────────────────────────
-    var jobs = new List<JobListing>
-    {
-        new JobListing
-        {
-            Id          = Guid.NewGuid(),
-            Title       = "Software Engineer",
-            Company     = "TechCorp",
-            Location    = "Cape Town",
-            Description = "Build and maintain scalable web applications for enterprise clients.",
-            Type        = JobType.FullTime,
-            SalaryMin   = 45000,
-            SalaryMax   = 65000,
-            PostedAt    = DateTime.UtcNow.AddDays(-3),
-            IsActive    = true
-        },
-        new JobListing
-        {
-            Id          = Guid.NewGuid(),
-            Title       = "Frontend Developer",
-            Company     = "PixelStudio",
-            Location    = "Johannesburg",
-            Description = "Design and implement React components for our client-facing dashboard.",
-            Type        = JobType.Contract,
-            SalaryMin   = 30000,
-            SalaryMax   = null,
-            PostedAt    = DateTime.UtcNow.AddDays(-7),
-            IsActive    = true
-        },
-        new JobListing
-        {
-            Id          = Guid.NewGuid(),
-            Title       = "Data Analyst Intern",
-            Company     = "Insightful",
-            Location    = "Remote",
-            Description = "Assist the analytics team with data cleaning and visualisation tasks.",
-            Type        = JobType.Internship,
-            SalaryMin   = null,
-            SalaryMax   = null,
-            PostedAt    = DateTime.UtcNow.AddDays(-1),
-            IsActive    = true
-        }
-    };
-
     // ── GET /jobs ─────────────────────────────────────────────────────────
     app.MapGet("/jobs", () =>
     {
