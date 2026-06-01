@@ -36,3 +36,16 @@ Data Annotations can only validate one field at a time, so they cannot express t
 ### Structured Logging with Serilog
     Console.WriteLine produces plain text strings that are impossible to query or filter in production. Serilog writes structured JSON where every field
     — timestamp, level, message, exception — is a queryable property. In a real system, those logs feed into tools like Seq, Datadog, or Azure Monitor where you can filter by status code, search by job ID, or alert on error rate spikes. Plain strings cannot do any of that.
+
+## Assignment 1.4 Design Decisions
+
+### Stateless Auth — JWT vs Sessions
+Session-based auth stores login state on the SERVER — a session ID in memory or a database. Every request hits that store to check if the session is still valid. JWT-based auth stores state in the TOKEN itself — the server never remembers anything. Statelessness matters for horizontal scaling because any server in a cluster can validate a JWT without talking to a shared session store. Sessions require sticky sessions or a shared cache. JWTs require nothing shared.
+
+### 401 vs 403
+401 Unauthorized means "I don't know who you are — send a token."
+It is produced by UseAuthentication() when no token is present or the token is invalid. 403 Forbidden means "I know who you are but you are not allowed to do this." It is produced by UseAuthorization() when the token is valid but the role claim does not match the required role.
+
+### JWT Storage — localStorage vs Alternatives
+Storing a JWT in localStorage is risky because any JavaScript running on the page — including injected scripts from an XSS attack — can read localStorage and steal the token. The safer alternatives are HttpOnly
+cookies (JavaScript cannot read them at all) or in-memory storage (lost on page refresh but never accessible to injected scripts).
