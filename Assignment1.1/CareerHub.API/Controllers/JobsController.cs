@@ -1,97 +1,60 @@
+using CareerHub.API.Data;
 using CareerHub.API.DTOs;
 using CareerHub.API.Exceptions;
 using CareerHub.API.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 
 namespace CareerHub.API.Controllers;
 
+// Assignment 1.4 — Moved from minimal API endpoints to a controller
+// Assignment 2.1 — Replaced in-memory list with EF Core database operations
 [ApiController]
 [Route("api/jobs")]
 public class JobsController : ControllerBase
 {
-    // In-memory store — shared via static so all requests see the same data
-    // Week 2 replaces this with an actual database
-    private static readonly List<JobListing> _jobs = new()
-    {
-        new JobListing
-        {
-            Id          = Guid.NewGuid(),
-            Title       = "Software Engineer",
-            Company     = "TechCorp",
-            Location    = "Cape Town",
-            Description = "Build and maintain scalable web applications for enterprise clients.",
-            Type        = JobType.FullTime,
-            SalaryMin   = 45000,
-            SalaryMax   = 65000,
-            PostedAt    = DateTime.UtcNow.AddDays(-3),
-            IsActive    = true
-        },
-        new JobListing
-        {
-            Id          = Guid.NewGuid(),
-            Title       = "Frontend Developer",
-            Company     = "PixelStudio",
-            Location    = "Johannesburg",
-            Description = "Design and implement React components for our client-facing dashboard.",
-            Type        = JobType.Contract,
-            SalaryMin   = 30000,
-            SalaryMax   = null,
-            PostedAt    = DateTime.UtcNow.AddDays(-7),
-            IsActive    = true
-        },
-        new JobListing
-        {
-            Id          = Guid.NewGuid(),
-            Title       = "Data Analyst Intern",
-            Company     = "Insightful",
-            Location    = "Remote",
-            Description = "Assist the analytics team with data cleaning and visualisation tasks.",
-            Type        = JobType.Internship,
-            SalaryMin   = null,
-            SalaryMax   = null,
-            PostedAt    = DateTime.UtcNow.AddDays(-1),
-            IsActive    = true
-        }
-    };
+    private readonly CareerHubDbContext _context;
 
-    // GET /api/jobs — public, no token required
-    // [AllowAnonymous] overrides any controller-level [Authorize]
-    [HttpGet]
-    [AllowAnonymous]
-    public IActionResult GetAll()
+    // Assignment 2.1 — DbContext injected by DI container
+    public JobsController(CareerHubDbContext context)
     {
-        var response = _jobs
-            .Where(j => j.IsActive)
-            .Select(JobResponse.FromModel);
-        return Ok(response);
+        _context = context;
     }
 
-    // GET /api/jobs/{id} — public, no token required
+    // GET /api/jobs — public
+    [HttpGet]
+    [AllowAnonymous]
+    public async Task<IActionResult> GetAll()
+    {
+        var jobs = await _context.JobListings
+            .Where(j => j.IsActive)
+            .ToListAsync();
+
+        return Ok(jobs.Select(JobResponse.FromModel));
+    }
+
+    // GET /api/jobs/{id} — public
     [HttpGet("{id:guid}")]
     [AllowAnonymous]
-    public IActionResult GetById(Guid id)
+    public async Task<IActionResult> GetById(Guid id)
     {
-        var job = _jobs.FirstOrDefault(j => j.Id == id);
+        var job = await _context.JobListings.FindAsync(id);
+
         if (job is null)
             throw new JobNotFoundException(id);
 
         return Ok(JobResponse.FromModel(job));
     }
 
-    // POST /api/jobs — requires valid JWT + Employer role
-    // [Authorize(Roles = "Employer")] — two checks:
-    // 1. Is the token valid? If not → 401 Unauthorized
-    // 2. Does the token have role = Employer? If not → 403 Forbidden
+    // POST /api/jobs — Employer role required
     [HttpPost]
     [Authorize(Roles = "Employer")]
-    public IActionResult Create([FromBody] CreateJobRequest request)
+    public async Task<IActionResult> Create([FromBody] CreateJobRequest request)
     {
-        bool duplicate = _jobs.Any(j =>
-            string.Equals(j.Title,   request.Title,
-                StringComparison.OrdinalIgnoreCase) &&
-            string.Equals(j.Company, request.Company,
-                StringComparison.OrdinalIgnoreCase));
+        bool duplicate = await _context.JobListings.AnyAsync(j =>
+            j.Title.ToLower()   == request.Title.ToLower() &&
+            j.Company.ToLower() == request.Company.ToLower());
 
         if (duplicate)
             throw new DuplicateJobListingException(request.Title, request.Company);
@@ -110,16 +73,20 @@ public class JobsController : ControllerBase
             IsActive    = true
         };
 
-        _jobs.Add(newJob);
+        _context.JobListings.Add(newJob);
+        await _context.SaveChangesAsync();
+
         return Created($"/api/jobs/{newJob.Id}", JobResponse.FromModel(newJob));
     }
 
-    // PUT /api/jobs/{id} — requires valid JWT + Employer role
+    // PUT /api/jobs/{id} — Employer role required
     [HttpPut("{id:guid}")]
     [Authorize(Roles = "Employer")]
-    public IActionResult Update(Guid id, [FromBody] UpdateJobRequest request)
+    public async Task<IActionResult> Update(Guid id,
+        [FromBody] UpdateJobRequest request)
     {
-        var existing = _jobs.FirstOrDefault(j => j.Id == id);
+        var existing = await _context.JobListings.FindAsync(id);
+
         if (existing is null)
             throw new JobNotFoundException(id);
 
@@ -131,19 +98,24 @@ public class JobsController : ControllerBase
         existing.SalaryMin   = request.SalaryMin;
         existing.SalaryMax   = request.SalaryMax;
 
+        await _context.SaveChangesAsync();
+
         return Ok(JobResponse.FromModel(existing));
     }
 
-    // DELETE /api/jobs/{id} — requires valid JWT + Employer role
+    // DELETE /api/jobs/{id} — Employer role required
     [HttpDelete("{id:guid}")]
     [Authorize(Roles = "Employer")]
-    public IActionResult Delete(Guid id)
+    public async Task<IActionResult> Delete(Guid id)
     {
-        var job = _jobs.FirstOrDefault(j => j.Id == id);
+        var job = await _context.JobListings.FindAsync(id);
+
         if (job is null)
             throw new JobNotFoundException(id);
 
-        _jobs.Remove(job);
+        _context.JobListings.Remove(job);
+        await _context.SaveChangesAsync();
+
         return NoContent();
     }
 }
