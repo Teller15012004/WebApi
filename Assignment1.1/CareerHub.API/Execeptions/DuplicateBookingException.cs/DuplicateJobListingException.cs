@@ -1,8 +1,7 @@
 namespace CareerHub.API.Exceptions;
 
-// Conference Booking equivalent: DuplicateBookingException
-// Thrown when someone tries to post a job that already exists
-// Accepts title and company — formats a meaningful message
+// Assignment 1.3 — Thrown when title + company combination already exists
+// GlobalExceptionHandler maps it to 409
 public class DuplicateJobListingException : Exception
 {
     public DuplicateJobListingException(string title, string company)
