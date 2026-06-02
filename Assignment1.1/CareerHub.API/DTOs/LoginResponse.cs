@@ -1,5 +1,4 @@
 namespace CareerHub.API.DTOs;
 
-// What the server sends back after a successful login
-// Just the token string — client stores this and sends it with every request
+// Assignment 1.4 — What the server sends back after successful login
 public record LoginResponse(string Token);

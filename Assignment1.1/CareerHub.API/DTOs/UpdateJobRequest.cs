@@ -1,9 +1,10 @@
 using System.ComponentModel.DataAnnotations;
 using CareerHub.API.Models;
+
 namespace CareerHub.API.DTOs;
-// Same validation rules as CreateJobRequest
+
+// Assignment 1.2 — Same rules as CreateJobRequest
 // ID comes from the route — never the body
-// PUT /jobs/{id} not PUT /jobs with id in body
 public class UpdateJobRequest : IValidatableObject
 {
     [Required(ErrorMessage = "Title is required")]
@@ -20,8 +21,7 @@ public class UpdateJobRequest : IValidatableObject
     public string Location { get; set; } = string.Empty;
 
     [Required(ErrorMessage = "Description is required")]
-    [MinLength(20,
-        ErrorMessage = "Description must be at least 20 characters")]
+    [MinLength(20, ErrorMessage = "Description must be at least 20 characters")]
     public string Description { get; set; } = string.Empty;
 
     [Required(ErrorMessage = "Job type is required")]
@@ -44,9 +44,8 @@ public class UpdateJobRequest : IValidatableObject
             {
                 yield return new ValidationResult(
                     "SalaryMax must be greater than SalaryMin",
-                    new[] { nameof(SalaryMax) }
-                );
+                    new[] { nameof(SalaryMax) });
             }
         }
     }
-}
+} 
