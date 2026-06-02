@@ -49,3 +49,17 @@ It is produced by UseAuthentication() when no token is present or the token is i
 ### JWT Storage — localStorage vs Alternatives
 Storing a JWT in localStorage is risky because any JavaScript running on the page — including injected scripts from an XSS attack — can read localStorage and steal the token. The safer alternatives are HttpOnly
 cookies (JavaScript cannot read them at all) or in-memory storage (lost on page refresh but never accessible to injected scripts).
+
+## Assignment 2.1 Design Decisions
+
+### The Change Tracker
+EF Core's change tracker watches every entity you load from the database. When you call FindAsync, it takes a snapshot of the entity's state. When you later mutate properties and call SaveChangesAsync, EF Core compares the current state against that snapshot and generates only the SQL needed to apply the differences. SaveChangesAsync is called once at the end because it wraps all changes in a single database transaction — either everything saves or nothing does.
+Calling it once per property change would mean one transaction per property, which is slower and risks partial saves if one fails.
+
+### Migrations as Version Control
+The migration file must be committed alongside the code that caused it because the migration IS the database schema at that point in time.
+If a teammate pulls code that references a migration they have not applied, their database schema is out of sync with the application code.
+EF Core will throw an error on startup or at runtime because it expects columns that do not exist yet. Running dotnet ef database update after pulling is the fix — but only if the migration file isin source control.
+
+### Connection String Security
+The connection string belongs in appsettings.Development.json because that file is excluded from source control via .gitignore. appsettings.json is committed to GitHub — putting credentials there is a real security incident. For production, the safer alternative is environment variables or a secrets manager like Azure Key Vault or AWS Secrets Manager, where credentials are injected at runtime and never stored in files.
