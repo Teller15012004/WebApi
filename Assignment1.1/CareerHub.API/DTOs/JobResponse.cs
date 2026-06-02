@@ -1,4 +1,4 @@
-using CareerHub.Models;
+using CareerHub.API.Models;
 
 namespace CareerHub.API.DTOs;
 // Conference Booking equivalent: BookingResponse

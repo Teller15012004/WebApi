@@ -21,6 +21,19 @@
           "Microsoft.AspNetCore.App"
         ]
       },
+      "Microsoft.AspNetCore.Identity/2.3.10": {
+        "type": "package",
+        "compile": {
+          "lib/netstandard2.0/_._": {
+            "related": ".xml"
+          }
+        },
+        "runtime": {
+          "lib/netstandard2.0/_._": {
+            "related": ".xml"
+          }
+        }
+      },
       "Microsoft.AspNetCore.OpenApi/10.0.8": {
         "type": "package",
         "dependencies": {
@@ -371,6 +384,19 @@
         "lib/net10.0/Microsoft.AspNetCore.Authentication.JwtBearer.xml",
         "microsoft.aspnetcore.authentication.jwtbearer.10.0.8.nupkg.sha512",
         "microsoft.aspnetcore.authentication.jwtbearer.nuspec"
+      ]
+    },
+    "Microsoft.AspNetCore.Identity/2.3.10": {
+      "sha512": "JziLM8f4TzSyZsrz8vEM5S5/BHoMtoYuD8bIQ4HD6JKdRjXnz7HNqojk7vhO6KgSxklDEE9dkMk52gFqFTj+xA==",
+      "type": "package",
+      "path": "microsoft.aspnetcore.identity/2.3.10",
+      "files": [
+        ".nupkg.metadata",
+        ".signature.p7s",
+        "lib/netstandard2.0/Microsoft.AspNetCore.Identity.dll",
+        "lib/netstandard2.0/Microsoft.AspNetCore.Identity.xml",
+        "microsoft.aspnetcore.identity.2.3.10.nupkg.sha512",
+        "microsoft.aspnetcore.identity.nuspec"
       ]
     },
     "Microsoft.AspNetCore.OpenApi/10.0.8": {
@@ -855,6 +881,7 @@
   "projectFileDependencyGroups": {
     "net10.0": [
       "Microsoft.AspNetCore.Authentication.JwtBearer >= 10.0.8",
+      "Microsoft.AspNetCore.Identity >= 2.3.10",
       "Microsoft.AspNetCore.OpenApi >= 10.0.8",
       "Scalar.AspNetCore >= 2.14.14",
       "Serilog.AspNetCore >= 10.0.0",
@@ -863,31 +890,24 @@
     ]
   },
   "packageFolders": {
-    "C:\\Users\\Khauhelo\\.nuget\\packages\\": {},
-    "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages": {}
+    "C:\\Users\\Training Center 6\\.nuget\\packages\\": {}
   },
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "C:\\Users\\Khauhelo\\Desktop\\WebApi\\WebApi\\WebApi\\Assignment1.1\\CareerHub.Api\\CareerHub.API.csproj",
+      "projectUniqueName": "C:\\Users\\Training Center 6\\OneDrive\\Desktop\\WebApi\\WebApi\\Assignment1.1\\CareerHub.API\\CareerHub.API.csproj",
       "projectName": "CareerHub.API",
-      "projectPath": "C:\\Users\\Khauhelo\\Desktop\\WebApi\\WebApi\\WebApi\\Assignment1.1\\CareerHub.Api\\CareerHub.API.csproj",
-      "packagesPath": "C:\\Users\\Khauhelo\\.nuget\\packages\\",
-      "outputPath": "C:\\Users\\Khauhelo\\Desktop\\WebApi\\WebApi\\WebApi\\Assignment1.1\\CareerHub.Api\\obj\\",
+      "projectPath": "C:\\Users\\Training Center 6\\OneDrive\\Desktop\\WebApi\\WebApi\\Assignment1.1\\CareerHub.API\\CareerHub.API.csproj",
+      "packagesPath": "C:\\Users\\Training Center 6\\.nuget\\packages\\",
+      "outputPath": "C:\\Users\\Training Center 6\\OneDrive\\Desktop\\WebApi\\WebApi\\Assignment1.1\\CareerHub.API\\obj\\",
       "projectStyle": "PackageReference",
-      "fallbackFolders": [
-        "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
-      ],
       "configFilePaths": [
-        "C:\\Users\\Khauhelo\\AppData\\Roaming\\NuGet\\NuGet.Config",
-        "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.FallbackLocation.config",
-        "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
+        "C:\\Users\\Training Center 6\\AppData\\Roaming\\NuGet\\NuGet.Config"
       ],
       "originalTargetFrameworks": [
         "net10.0"
       ],
       "sources": {
-        "C:\\Program Files (x86)\\Microsoft SDKs\\NuGetPackages\\": {},
         "https://api.nuget.org/v3/index.json": {}
       },
       "frameworks": {
@@ -917,6 +937,10 @@
           "Microsoft.AspNetCore.Authentication.JwtBearer": {
             "target": "Package",
             "version": "[10.0.8, )"
+          },
+          "Microsoft.AspNetCore.Identity": {
+            "target": "Package",
+            "version": "[2.3.10, )"
           },
           "Microsoft.AspNetCore.OpenApi": {
             "target": "Package",
@@ -1375,5 +1399,17 @@
         }
       }
     }
-  }
+  },
+  "logs": [
+    {
+      "code": "NU1510",
+      "level": "Warning",
+      "warningLevel": 1,
+      "message": "PackageReference Microsoft.AspNetCore.Identity will not be pruned. Consider removing this package from your dependencies, as it is likely unnecessary.",
+      "libraryId": "Microsoft.AspNetCore.Identity",
+      "targetGraphs": [
+        "net10.0"
+      ]
+    }
+  ]
 }
