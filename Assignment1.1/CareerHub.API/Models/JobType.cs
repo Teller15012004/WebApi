@@ -1,5 +1,7 @@
 namespace CareerHub.API.Models;
-// Locks job type to exactly these four values
+
+// Assignment 1.2 — Locks job type to four valid values
+// Prevents "banana" being stored as a job type
 public enum JobType
 {
     FullTime,
