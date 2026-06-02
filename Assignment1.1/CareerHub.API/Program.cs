@@ -1,14 +1,14 @@
-using CareerHub.API.DTOs;
-using CareerHub.API.Exceptions;
+using System.Text;
+using CareerHub.API.Data;
 using CareerHub.API.Middleware;
-using CareerHub.API.Models;
-using Serilog;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
 using Scalar.AspNetCore;
+using Serilog;
 
-
-// Configure Serilog at the VERY TOP — before anything else
-// This ensures startup errors are caught and logged
-// Conference Booking equivalent: the LoggerConfiguration the lecturer showed
+// Assignment 1.3 — Serilog bootstrap logger
+// Catches startup errors before the app fully loads
 Log.Logger = new LoggerConfiguration()
     .WriteTo.Console()
     .CreateBootstrapLogger();
@@ -17,39 +17,87 @@ try
 {
     var builder = WebApplication.CreateBuilder(args);
 
-    // Replace the default ASP.NET logger with Serilog
+    // Assignment 1.3 — Replace default logger with Serilog
     builder.Host.UseSerilog((context, services, configuration) =>
         configuration.WriteTo.Console());
 
+    // Assignment 1.4 — Scan Controllers/ folder and register all controllers
+    builder.Services.AddControllers()
+        .AddJsonOptions(options =>
+        {
+            // Assignment 1.2 — Write enums as strings: "FullTime" not 0
+            options.JsonSerializerOptions.Converters.Add(
+                new System.Text.Json.Serialization.JsonStringEnumConverter());
+        });
+
     builder.Services.AddOpenApi();
 
-    // JSON serialiser: write enums as strings not numbers
-    builder.Services.ConfigureHttpJsonOptions(options =>
-    {
-        options.SerializerOptions.Converters.Add(
-            new System.Text.Json.Serialization.JsonStringEnumConverter());
-    });
-
-    // Register Problem Details service
+    // Assignment 1.2 — Consistent error shape for all errors
     builder.Services.AddProblemDetails();
 
-    // Register our GlobalExceptionHandler
-    // This is the line the assignment requires — wires up our custom handler
+    // Assignment 1.3 — Our custom global exception handler
     builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
+
+    // Assignment 1.4 — CORS policy for Next.js frontend on port 3000
+    builder.Services.AddCors(options =>
+    {
+        options.AddPolicy("AllowFrontend", policy =>
+        {
+            policy
+                .WithOrigins("http://localhost:3000")
+                .AllowAnyHeader()
+                .AllowAnyMethod();
+        });
+    });
+
+    // Assignment 1.4 — Read secret key from config, never hardcoded
+    var secretKey = builder.Configuration["Jwt:SecretKey"]!;
+    var keyBytes  = Encoding.UTF8.GetBytes(secretKey);
+
+    // Assignment 1.4 — JWT Bearer Authentication
+    builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+        .AddJwtBearer(options =>
+        {
+            options.TokenValidationParameters = new TokenValidationParameters
+            {
+                ValidateIssuerSigningKey = true,
+                IssuerSigningKey         = new SymmetricSecurityKey(keyBytes),
+                ValidateIssuer           = false,
+                ValidateAudience         = false,
+                ValidateLifetime         = true
+            };
+        });
+
+    // Assignment 1.4 — Required for [Authorize(Roles = "Employer")] to work
+    builder.Services.AddAuthorization();
+
+    // Assignment 2.1 — Register DbContext with Npgsql provider
+    // Scoped lifetime — one instance per HTTP request
+    builder.Services.AddDbContext<CareerHubDbContext>(options =>
+        options.UseNpgsql(
+            builder.Configuration.GetConnectionString("DefaultConnection")));
 
     var app = builder.Build();
 
-    // UseExceptionHandler — activates the IExceptionHandler pipeline
-    // Our GlobalExceptionHandler gets called from here
-    app.UseExceptionHandler();
+    // ── MIDDLEWARE PIPELINE — ORDER MATTERS ───────────────────────────────
 
-    // UseSerilogRequestLogging — logs every HTTP request automatically
-    // Shows method, path, status code, and response time in terminal
-    // Must come AFTER UseExceptionHandler so errors are caught first
+    // Assignment 1.3 — Log every request first
     app.UseSerilogRequestLogging();
 
-    // UseStatusCodePages — wraps bare status codes in Problem Details
+    // Assignment 1.4 — Browser preflight checks
+    app.UseCors("AllowFrontend");
+
+    // Assignment 1.3 — Safety net for all exceptions below
+    app.UseExceptionHandler();
+
+    // Assignment 1.2 — Wraps bare status codes in Problem Details
     app.UseStatusCodePages();
+
+    // Assignment 1.4 — Reads and validates the JWT token (WHO are you?)
+    app.UseAuthentication();
+
+    // Assignment 1.4 — Checks [Authorize] attributes (WHAT can you do?)
+    app.UseAuthorization();
 
     if (app.Environment.IsDevelopment())
     {
@@ -57,95 +105,18 @@ try
         app.MapScalarApiReference();
     }
 
-    // ── GET /jobs ─────────────────────────────────────────────────────────
-    app.MapGet("/jobs", () =>
-    {
-        var response = jobs
-            .Where(j => j.IsActive)
-            .Select(JobResponse.FromModel);
-        return Results.Ok(response);
-    });
-
-    // ── GET /jobs/{id} ────────────────────────────────────────────────────
-    // BEFORE (1.2): if (job is null) return Results.Problem(statusCode: 404)
-    // AFTER  (1.3): just throw — GlobalExceptionHandler does the rest
-    app.MapGet("/jobs/{id:guid}", (Guid id) =>
-    {
-        var job = jobs.FirstOrDefault(j => j.Id == id);
-        if (job is null)
-            throw new JobNotFoundException(id);
-
-        return Results.Ok(JobResponse.FromModel(job));
-    });
-
-    // ── POST /jobs ────────────────────────────────────────────────────────
-    app.MapPost("/jobs", (CreateJobRequest request) =>
-    {
-        bool duplicate = jobs.Any(j =>
-            string.Equals(j.Title,   request.Title,
-                StringComparison.OrdinalIgnoreCase) &&
-            string.Equals(j.Company, request.Company,
-                StringComparison.OrdinalIgnoreCase));
-
-        if (duplicate)
-            throw new DuplicateJobListingException(request.Title, request.Company);
-
-        var newJob = new JobListing
-        {
-            Id          = Guid.NewGuid(),
-            Title       = request.Title,
-            Company     = request.Company,
-            Location    = request.Location,
-            Description = request.Description,
-            Type        = request.Type,
-            SalaryMin   = request.SalaryMin,
-            SalaryMax   = request.SalaryMax,
-            PostedAt    = DateTime.UtcNow,
-            IsActive    = true
-        };
-
-        jobs.Add(newJob);
-        return Results.Created($"/jobs/{newJob.Id}", JobResponse.FromModel(newJob));
-    });
-
-    // ── PUT /jobs/{id} ────────────────────────────────────────────────────
-    app.MapPut("/jobs/{id:guid}", (Guid id, UpdateJobRequest request) =>
-    {
-        var existing = jobs.FirstOrDefault(j => j.Id == id);
-        if (existing is null)
-            throw new JobNotFoundException(id);
-
-        existing.Title       = request.Title;
-        existing.Company     = request.Company;
-        existing.Location    = request.Location;
-        existing.Description = request.Description;
-        existing.Type        = request.Type;
-        existing.SalaryMin   = request.SalaryMin;
-        existing.SalaryMax   = request.SalaryMax;
-
-        return Results.Ok(JobResponse.FromModel(existing));
-    });
-
-    // ── DELETE /jobs/{id} ─────────────────────────────────────────────────
-    app.MapDelete("/jobs/{id:guid}", (Guid id) =>
-    {
-        var job = jobs.FirstOrDefault(j => j.Id == id);
-        if (job is null)
-            throw new JobNotFoundException(id);
-
-        jobs.Remove(job);
-        return Results.NoContent();
-    });
+    // Assignment 1.4 — Routes requests to the right controller method
+    app.MapControllers();
 
     app.Run();
 }
 catch (Exception ex)
 {
-    // Catches fatal startup errors — Serilog logs them before the app dies
+    // Assignment 1.3 — Catches fatal startup errors
     Log.Fatal(ex, "Application failed to start");
 }
 finally
 {
-    // Always flush logs before the process exits
+    // Assignment 1.3 — Always flush logs before the process exits
     Log.CloseAndFlush();
 }
