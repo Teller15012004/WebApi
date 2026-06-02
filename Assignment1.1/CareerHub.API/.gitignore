@@ -1,0 +1,15 @@
+# Build output — auto-generated, never commit these
+bin/
+obj/
+
+# User-specific VS Code settings
+.vs/
+*.user
+
+# Environment and secrets — never commit these
+appsettings.Development.json
+*.env
+
+# NuGet
+*.nupkg
+project.assets.json
