@@ -12,11 +12,10 @@ public class UpdateJobRequest : IValidatableObject
         ErrorMessage = "Title must be between 5 and 120 characters")]
     public string Title { get; set; } = string.Empty;
 
-    [Required(ErrorMessage = "Company is required")]
-    [StringLength(80, MinimumLength = 2,
-        ErrorMessage = "Company must be between 2 and 80 characters")]
-    public string Company { get; set; } = string.Empty;
-
+    // Add this instead:
+    [Required(ErrorMessage = "Company ID is required")]
+    public Guid CompanyId { get; set;
+    
     [Required(ErrorMessage = "Location is required")]
     public string Location { get; set; } = string.Empty;
 
