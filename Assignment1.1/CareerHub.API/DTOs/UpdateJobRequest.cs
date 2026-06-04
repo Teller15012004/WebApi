@@ -4,6 +4,7 @@ using CareerHub.API.Models;
 namespace CareerHub.API.DTOs;
 
 // Assignment 1.2 — Same rules as CreateJobRequest
+// Assignment 2.2 — Replaced Company string with CompanyId
 // ID comes from the route — never the body
 public class UpdateJobRequest : IValidatableObject
 {
@@ -12,10 +13,9 @@ public class UpdateJobRequest : IValidatableObject
         ErrorMessage = "Title must be between 5 and 120 characters")]
     public string Title { get; set; } = string.Empty;
 
-    // Add this instead:
     [Required(ErrorMessage = "Company ID is required")]
-    public Guid CompanyId { get; set;
-    
+    public Guid CompanyId { get; set; }
+
     [Required(ErrorMessage = "Location is required")]
     public string Location { get; set; } = string.Empty;
 
@@ -47,4 +47,4 @@ public class UpdateJobRequest : IValidatableObject
             }
         }
     }
-} 
+}
