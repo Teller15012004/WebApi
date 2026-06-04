@@ -63,3 +63,28 @@ EF Core will throw an error on startup or at runtime because it expects columns 
 
 ### Connection String Security
 The connection string belongs in appsettings.Development.json because that file is excluded from source control via .gitignore. appsettings.json is committed to GitHub — putting credentials there is a real security incident. For production, the safer alternative is environment variables or a secrets manager like Azure Key Vault or AWS Secrets Manager, where credentials are injected at runtime and never stored in files.
+
+## Assignment 2.2 Design Decisions
+
+### N+1 Problem
+Before the fix, GET /api/jobs produced 6 SQL queries for 5 listings.
+One query loaded all listings, then one separate query per listing
+loaded its company. In production with 1000 listings this becomes
+1001 queries per request — each one a separate database round-trip.
+The fix was adding .Include(j => j.Company) which tells EF Core to
+JOIN the companies table in the same query. After the fix, GET /api/jobs
+always produces exactly one SQL statement regardless of how many
+listings exist.
+
+### Read vs Write Queries
+A GET endpoint with AsNoTracking() skips the change tracker snapshot.
+EF Core does not need to remember the original state of entities it
+will never modify. This saves memory and CPU on every read.
+A write endpoint (PUT, DELETE) must NOT use AsNoTracking() because
+the change tracker is what detects which properties changed and
+generates the targeted UPDATE SQL. If you accidentally use AsNoTracking
+on a write operation, EF Core loads the entity but does not track it.
+When you mutate properties and call SaveChangesAsync(), the change
+tracker sees no changes — nothing is written to the database.
+The save appears to succeed (no exception) but the data is not updated.
+This is a silent data loss bug.
