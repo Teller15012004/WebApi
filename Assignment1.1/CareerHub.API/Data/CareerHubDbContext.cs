@@ -136,4 +136,14 @@ public class CareerHubDbContext : DbContext
                   .OnDelete(DeleteBehavior.Cascade);
         });
     }
+
+    // Assignment 2.2 — TEMPORARY — remove before committing
+// Logs every SQL query to the terminal so you can count them
+protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
+{
+    if (!optionsBuilder.IsConfigured)
+        return;
+
+    optionsBuilder.LogTo(Console.WriteLine, LogLevel.Information);
+}
 }
