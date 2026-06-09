@@ -86,5 +86,56 @@ generates the targeted UPDATE SQL. If you accidentally use AsNoTracking
 on a write operation, EF Core loads the entity but does not track it.
 When you mutate properties and call SaveChangesAsync(), the change
 tracker sees no changes — nothing is written to the database.
-The save appears to succeed (no exception) but the data is not updated.
-This is a silent data loss bug.
+The save appears to succeed (no exception) but the data is not updated. This is a silent data loss bug.
+
+## Assignment 2.4 Design Decisions
+
+### 1. Constraint Placement
+The service validates SalaryMin <= SalaryMax when a listing is
+created via the API. But the service can be bypassed in three
+specific scenarios:
+- A developer runs a direct INSERT in psql during an incident
+- A database migration script bulk-inserts rows without going
+  through the API
+- A bug in a future service method forgets to call the validator
+
+If the database has no check constraint, all three scenarios
+silently corrupt data. A listing with SalaryMin=80000 and
+SalaryMax=20000 would be stored and served to job seekers.
+The database constraint is the last line of defence — it enforces
+the rule even when the application layer is bypassed.
+
+### 2. Index Column Ordering
+Query 1: WHERE CompanyId = X AND Status = 'Active'
+→ CompanyId goes first. It is the high-selectivity column —
+  it filters down to one company's listings immediately.
+  Status is then applied to that small set.
+
+Query 2: WHERE ExpiresAt < @threshold AND Status = 'Active'
+→ Status goes first. PostgreSQL can only use a composite index
+  if it filters on the leftmost column. A query that filters
+  only on ExpiresAt (the second column) cannot use a composite
+  index that starts with Status — it would fall back to a
+  sequential scan. Putting Status first lets both queries use
+  their respective indexes efficiently.
+
+### 3. Hot Paths
+Method 1: GetActiveListingsAsync()
+Called on every single page load of the job board. With 1000
+daily active users and an average of 10 page loads per session,
+this runs ~10,000 times per day. Pre-compiling eliminates
+repeated query plan compilation overhead on every call.
+
+Method 2: HasAppliedAsync(jobListingId, applicantId)
+Called every time any user opens a job detail page to check
+if the button should say "Apply" or "Applied". Same 10,000
+daily call volume. The query is simple and identical every
+time — perfect candidate for a compiled query.
+
+### 4. FromSql Scope
+The application statistics query requires RANK() OVER
+(ORDER BY total_applications DESC) — a window function.
+EF Core's LINQ translator has no equivalent for window
+functions. It also requires COUNT(*) FILTER (WHERE status = X)
+— conditional aggregation — which EF Core cannot translate
+to SQL from LINQ. Raw SQL is the only option here.
