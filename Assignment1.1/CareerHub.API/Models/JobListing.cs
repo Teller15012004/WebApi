@@ -28,4 +28,9 @@ public class JobListing
 
     // Assignment 2.2 — All applications received for this listing
     public List<Application> Applications { get; set; } = new();
+
+// Assignment 2.4 — Listings can expire
+// NULL means the listing never expires
+public DateTime? ExpiresAt { get; set; }
+
 }

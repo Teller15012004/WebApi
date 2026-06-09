@@ -160,13 +160,13 @@ public class JobsController : ControllerBase
         if (existing is null)
             throw new JobNotFoundException(id);
 
-            existing.Title       = request.Title;
-            existing.CompanyId   = request.CompanyId;
-            existing.Location    = request.Location;
-            existing.Description = request.Description;
-            existing.Type        = request.Type;
-            existing.SalaryMin   = request.SalaryMin;
-            existing.SalaryMax   = request.SalaryMax;
+        existing.Title       = request.Title;
+        existing.CompanyId   = request.CompanyId;
+        existing.Location    = request.Location;
+        existing.Description = request.Description;
+        existing.Type        = request.Type;
+        existing.SalaryMin   = request.SalaryMin;
+        existing.SalaryMax   = request.SalaryMax;
 
         await _context.SaveChangesAsync();
 
