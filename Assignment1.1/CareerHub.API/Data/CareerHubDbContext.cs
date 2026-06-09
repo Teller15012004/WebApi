@@ -146,4 +146,27 @@ protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
 
     optionsBuilder.LogTo(Console.WriteLine, LogLevel.Information);
 }
-}
+      // ── JobListing constraints ─────────────────────────────────────────────
+      modelBuilder.Entity<JobListing>(entity =>
+{
+    // ... your existing configuration stays here ...
+
+    // CHECK CONSTRAINT: SalaryMin must be positive when provided
+    // Name follows convention: ck_tablename_description
+    // This runs at the DATABASE level — bypasses the API completely
+    entity.ToTable(t => t.HasCheckConstraint(
+        "ck_job_listings_salary_min_positive",
+        "salary_min IS NULL OR salary_min > 0"));
+
+    // CHECK CONSTRAINT: SalaryMax must be greater than SalaryMin
+    // Handles nulls — a null salary is allowed, min > max is not
+    entity.ToTable(t => t.HasCheckConstraint(
+        "ck_job_listings_salary_max_greater_than_min",
+        "salary_min IS NULL OR salary_max IS NULL OR salary_max > salary_min"));
+
+    // CHECK CONSTRAINT: ExpiresAt must be after PostedAt
+    // A listing cannot expire before it was posted
+    entity.ToTable(t => t.HasCheckConstraint(
+        "ck_job_listings_expires_after_posted",
+        "expires_at IS NULL OR expires_at > posted_at"));
+});
