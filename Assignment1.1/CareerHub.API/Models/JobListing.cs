@@ -33,4 +33,8 @@ public class JobListing
 // NULL means the listing never expires
 public DateTime? ExpiresAt { get; set; }
 
+// Assignment 2.4 — Computed column for full-text search
+// PostgreSQL generates this from Title + Description automatically
+// We never set this in C# — the database maintains it
+public string? SearchVector { get; set; }
 }
